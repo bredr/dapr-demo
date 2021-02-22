@@ -1,0 +1,41 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: detector-service
+  labels:
+    app: detector-service
+spec:
+  selector:
+    app: detector-service
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: detector-service
+  labels:
+    app: detector-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: detector-service
+  template:
+    metadata:
+      labels:
+        app: detector-service
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "detector-service"
+        dapr.io/app-port: "8080"
+    spec:
+      containers:
+      - name: service
+        image: detector-service
+        ports:
+        - containerPort: 8080

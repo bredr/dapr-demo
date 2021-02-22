@@ -1,0 +1,8 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+requires:
+- path: ./detector-service
+deploy:
+  kubectl:
+    manifests:
+    - components/*
