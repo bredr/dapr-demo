@@ -1,15 +1,18 @@
 apiVersion: skaffold/v2beta12
 kind: Config
 metadata:
-  name: detector-service-config
+  name: operator-service-config
 requires:
-- path: ../base
+- path: ../../base
+- path: ../common
 build:
   artifacts:
-  - image: detector-service
+  - image: operator
     requires:
     - image: base
       alias: BASE
+    - image: common
+      alias: COMMON
 deploy:
   kubectl:
     manifests:

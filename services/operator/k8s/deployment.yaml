@@ -1,0 +1,42 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: operator
+  labels:
+    app: operator
+spec:
+  selector:
+    app: operator
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: operator
+  labels:
+    app: operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: operator
+  template:
+    metadata:
+      labels:
+        app: operator
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "operator"
+        dapr.io/app-port: "8080"
+        dapr.io/config: "tracing"
+    spec:
+      containers:
+      - name: service
+        image: operator
+        ports:
+        - containerPort: 8080

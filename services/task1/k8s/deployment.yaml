@@ -1,12 +1,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: detector-service
+  name: task1
   labels:
-    app: detector-service
+    app: task1
 spec:
   selector:
-    app: detector-service
+    app: task1
   ports:
   - protocol: TCP
     port: 80
@@ -17,25 +17,26 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: detector-service
+  name: task1
   labels:
-    app: detector-service
+    app: task1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: detector-service
+      app: task1
   template:
     metadata:
       labels:
-        app: detector-service
+        app: task1
       annotations:
         dapr.io/enabled: "true"
-        dapr.io/app-id: "detector-service"
+        dapr.io/app-id: "task1"
         dapr.io/app-port: "8080"
+        dapr.io/config: "tracing"
     spec:
       containers:
       - name: service
-        image: detector-service
+        image: task1
         ports:
         - containerPort: 8080

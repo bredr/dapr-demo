@@ -1,0 +1,19 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: task2-service-config
+requires:
+- path: ../../base
+- path: ../common
+build:
+  artifacts:
+  - image: task2
+    requires:
+    - image: base
+      alias: BASE
+    - image: common
+      alias: COMMON
+deploy:
+  kubectl:
+    manifests:
+    - k8s/*

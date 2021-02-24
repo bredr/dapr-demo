@@ -1,7 +1,9 @@
 apiVersion: skaffold/v2beta12
 kind: Config
 requires:
-- path: ./detector-service
+- path: ./services/task1/
+- path: ./services/task2/
+- path: ./services/operator/
 deploy:
   kubectl:
     manifests:

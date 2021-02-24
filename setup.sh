@@ -5,6 +5,9 @@ minikube addons enable dashboard
 minikube addons enable ingress
 dapr init -k
 
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add bitnami https://charts.bitnami.com/bitnami --force-update
 helm repo update
-helm install redis bitnami/redis
+helm upgrade --install redis bitnami/redis
+
+kubectl create deployment zipkin --image openzipkin/zipkin --dry-run=client -o yaml | kubectl apply -f -
+kubectl expose deployment zipkin --type ClusterIP --port 9411 --dry-run=client -o yaml | kubectl apply -f -
