@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -33,8 +34,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("error creating dapr client: %v", err)
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	handler := &state.Handler{Client: client}
+	handler := state.New(ctx, client)
 	if err := s.AddTopicEventHandler(sub1, handler.Process); err != nil {
 		log.Fatalf("error adding topic handler: %v", err)
 	}
@@ -45,6 +48,9 @@ func main() {
 		log.Fatalf("error adding topic handler: %v", err)
 	}
 	if err := s.AddServiceInvocationHandler("/run", handler.Run); err != nil {
+		log.Fatalf("error adding invocation handler: %v", err)
+	}
+	if err := s.AddServiceInvocationHandler("/state", handler.List); err != nil {
 		log.Fatalf("error adding invocation handler: %v", err)
 	}
 

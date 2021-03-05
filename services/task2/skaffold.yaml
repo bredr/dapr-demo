@@ -6,6 +6,7 @@ requires:
 - path: ../../base
 - path: ../common
 build:
+  local: {push: false, useBuildkit: true}
   artifacts:
   - image: task2
     requires:

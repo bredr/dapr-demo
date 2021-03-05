@@ -40,3 +40,13 @@ spec:
         image: operator
         ports:
         - containerPort: 8080
+        env: 
+        - name: MONGO_USERNAME
+          value: root
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb
+              key: mongodb-root-password
+        - name: MONGO_URI
+          value: "mongodb://mongodb.default.svc.cluster.local:27017"

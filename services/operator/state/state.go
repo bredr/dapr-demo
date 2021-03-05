@@ -2,60 +2,63 @@ package state
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"log"
 
-	cmn "github.com/bredr/dapr-demo/services/common"
 	dapr "github.com/dapr/go-sdk/client"
-	"github.com/dapr/go-sdk/service/common"
-	"github.com/google/uuid"
+	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
+
+const MONGO_URI = "MONGO_URI"
+
+func init() {
+	viper.SetDefault(MONGO_URI, "mongodb://localhost:27017")
+	viper.AutomaticEnv()
+}
 
 type Handler struct {
 	Client dapr.Client
+	DB     mongo.Collection
 }
 
-func (h *Handler) Process(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
-	log.Printf("event - PubsubName: %s, Topic: %s, ID: %s, Data: %s", e.PubsubName, e.Topic, e.ID, e.Data)
-	msg, err := cmn.FromEvent(e)
+func New(ctx context.Context, c dapr.Client) *Handler {
+	client, err := mongo.Connect(ctx, options.Client().
+		ApplyURI(
+			viper.GetString(MONGO_URI),
+		).
+		SetAuth(
+			options.Credential{Username: viper.GetString("MONGO_USERNAME"), Password: viper.GetString("MONGO_PASSWORD")},
+		),
+	)
 	if err != nil {
-		return false, err
+		panic(err)
 	}
-
-	err = h.Client.SaveState(ctx, "statestore", fmt.Sprintf("%s:%s", msg.ID, e.Topic), []byte(fmt.Sprint(msg.Value)))
+	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		return true, err
+		panic(err)
 	}
-	return false, nil
-}
-
-func (h *Handler) Run(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-	if in == nil {
-		err = errors.New("invocation param required")
-		return
-	}
-	var input struct {
-		Value int `json:"value"`
-	}
-	err = json.Unmarshal(in.Data, &input)
+	collection := client.Database("db").Collection("state")
+	_, err = collection.Indexes().DropAll(ctx)
 	if err != nil {
-		return
+		panic(err)
 	}
-	id := uuid.New().String()
-	var b []byte
-	b, err = json.Marshal(&cmn.TaskMessage{ID: id, Value: input.Value})
+	_, err = collection.Indexes().CreateMany(ctx, []mongo.IndexModel{{
+		Keys:    bson.D{{"timestampid", -1}},
+		Options: options.Index().SetName("timestampDESC"),
+	}, {
+		Keys:    bson.D{{"timestampid", 1}},
+		Options: options.Index().SetName("timestampASC"),
+	}})
 	if err != nil {
-		return
+		panic(err)
 	}
-	err = h.Client.PublishEvent(ctx, "redis-pubsub", "task1", b)
-	if err != nil {
-		return
-	}
-	return &common.Content{
-		Data:        b,
-		ContentType: in.ContentType,
-		DataTypeURL: in.DataTypeURL,
-	}, nil
+	go func() {
+		<-ctx.Done()
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
+	return &Handler{Client: c, DB: *collection}
 }
