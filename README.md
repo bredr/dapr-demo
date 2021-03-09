@@ -1,6 +1,6 @@
 # dapr-demo
 
-Demonstrator to test various things in [dapr](dapr.io)
+Demonstrator to test various things in [dapr](dapr.io).
 
 ## local development
 
@@ -32,3 +32,10 @@ Attach debugger with task:
   "remotePath": "/go/src"
 }
 ```
+
+## Lessons learnt...
+
+- The state storage in Dapr is very limited in its interface lacking query and list options on its key-value interface.
+- The integration to pub-sub and http invocation are neat and straight forward.
+- The distributed tracing is rich and complete.
+- Developing locally with a local k8s option gives best local experience over the default local development experience as you are likely to require other state storage options for example. Skaffold.dev also gives some good options for local development.
